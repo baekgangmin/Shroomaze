@@ -107,3 +107,7 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# One-off before/after comparison reference files (not game assets)
+/Assets/ResultVerification/Before/
+/Assets/ResultVerification/Textures/
