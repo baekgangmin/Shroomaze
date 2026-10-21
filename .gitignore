@@ -111,3 +111,8 @@ InitTestScene*.unity*
 # One-off before/after comparison reference files (not game assets)
 /Assets/ResultVerification/Before/
 /Assets/ResultVerification/Textures/
+
+# Downloaded asset packs no longer referenced by the final scene (kept locally, not in repo)
+/Assets/Game Buffs/
+/Assets/Game Buffs.meta
+/Assets/LowlyPoly/Stylized Grass Texture/Textures/
