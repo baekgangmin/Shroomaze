@@ -143,6 +143,68 @@ public class MazeGenerator : MonoBehaviour
         return transform.position + new Vector3(x * cellSize, 0f, y * cellSize);
     }
 
+    Vector2Int WorldToCell(Vector3 world)
+    {
+        Vector3 local = world - transform.position;
+        int x = Mathf.Clamp(Mathf.RoundToInt(local.x / cellSize), 0, width - 1);
+        int y = Mathf.Clamp(Mathf.RoundToInt(local.z / cellSize), 0, height - 1);
+        return new Vector2Int(x, y);
+    }
+
+    IEnumerable<Vector2Int> OpenNeighbors(Vector2Int c)
+    {
+        int x = c.x, y = c.y;
+        if (x < width - 1 && !wallRight[x, y]) yield return new Vector2Int(x + 1, y);
+        if (x > 0 && !wallRight[x - 1, y]) yield return new Vector2Int(x - 1, y);
+        if (y < height - 1 && !wallDown[x, y]) yield return new Vector2Int(x, y + 1);
+        if (y > 0 && !wallDown[x, y - 1]) yield return new Vector2Int(x, y - 1);
+    }
+
+    // BFS over the current maze's corridor graph — used by the demo auto-pilot to walk the
+    // player to a target through actual open passages instead of cutting through walls.
+    public List<Vector3> FindPath(Vector3 fromWorld, Vector3 toWorld)
+    {
+        Vector2Int start = WorldToCell(fromWorld);
+        Vector2Int goal = WorldToCell(toWorld);
+
+        var prev = new Dictionary<Vector2Int, Vector2Int>();
+        var visitedCells = new HashSet<Vector2Int> { start };
+        var queue = new Queue<Vector2Int>();
+        queue.Enqueue(start);
+
+        while (queue.Count > 0)
+        {
+            var cur = queue.Dequeue();
+            if (cur == goal) break;
+            foreach (var next in OpenNeighbors(cur))
+            {
+                if (visitedCells.Contains(next)) continue;
+                visitedCells.Add(next);
+                prev[next] = cur;
+                queue.Enqueue(next);
+            }
+        }
+
+        var path = new List<Vector3>();
+        if (!visitedCells.Contains(goal))
+        {
+            path.Add(toWorld);
+            return path;
+        }
+
+        var cellPath = new List<Vector2Int> { goal };
+        var node = goal;
+        while (node != start)
+        {
+            node = prev[node];
+            cellPath.Add(node);
+        }
+        cellPath.Reverse();
+
+        foreach (var c in cellPath) path.Add(CellToWorld(c.x, c.y));
+        return path;
+    }
+
     void PlaceWallSegment(Vector3 worldPos, bool vertical)
     {
         if (wallPrefab == null) return;
@@ -233,6 +295,10 @@ public class MazeGenerator : MonoBehaviour
         }
     }
 
+    // Demo-recording aid only: spawns mushrooms near the entrance instead of anywhere in the
+    // maze, so a manual playthrough can finish a round quickly. Leave false for real play.
+    public bool spawnNearEntrance = false;
+
     void SpawnMushrooms()
     {
         if (mushroomPrefab == null) return;
@@ -245,10 +311,37 @@ public class MazeGenerator : MonoBehaviour
                 candidates.Add(new Vector2Int(x, y));
             }
 
-        for (int i = candidates.Count - 1; i > 0; i--)
+        if (spawnNearEntrance)
         {
-            int j = Random.Range(0, i + 1);
-            (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+            // sort by actual corridor distance (BFS through the open passages), not straight-line
+            // grid distance — a grid-adjacent cell can still be a long walk away behind walls
+            var dist = new Dictionary<Vector2Int, int>();
+            var start = new Vector2Int(entranceX, entranceY);
+            dist[start] = 0;
+            var queue = new Queue<Vector2Int>();
+            queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                var cur = queue.Dequeue();
+                foreach (var next in OpenNeighbors(cur))
+                {
+                    if (dist.ContainsKey(next)) continue;
+                    dist[next] = dist[cur] + 1;
+                    queue.Enqueue(next);
+                }
+            }
+
+            candidates.Sort((a, b) =>
+                (dist.TryGetValue(a, out var da) ? da : int.MaxValue)
+                .CompareTo(dist.TryGetValue(b, out var db) ? db : int.MaxValue));
+        }
+        else
+        {
+            for (int i = candidates.Count - 1; i > 0; i--)
+            {
+                int j = Random.Range(0, i + 1);
+                (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+            }
         }
 
         int count = Mathf.Min(mushroomCount, candidates.Count);

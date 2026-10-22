@@ -29,6 +29,36 @@ public class PlayerController : MonoBehaviour
         controller.enabled = true;
     }
 
+    // Drives the character toward a world point through normal CharacterController.Move calls
+    // (so it collides with walls like a real player would) rather than teleporting. Returns true
+    // once close enough to the target. Used by the automated demo recording.
+    public bool StepTowards(Vector3 targetPosition, float speed, float deltaTime)
+    {
+        Vector3 toTarget = targetPosition - transform.position;
+        toTarget.y = 0f;
+        float dist = toTarget.magnitude;
+        if (dist < 0.15f)
+        {
+            if (animator != null) animator.SetFloat("Speed", 0f);
+            return true;
+        }
+
+        Vector3 dir = toTarget / dist;
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(dir, Vector3.up), rotateSpeed * deltaTime);
+
+        if (controller.isGrounded && velocity.y < 0f) velocity.y = -2f;
+        velocity.y += gravity * deltaTime;
+
+        controller.Move((dir * speed + new Vector3(0f, velocity.y, 0f)) * deltaTime);
+        if (animator != null) animator.SetFloat("Speed", 1f);
+        return false;
+    }
+
+    public void SetIdle()
+    {
+        if (animator != null) animator.SetFloat("Speed", 0f);
+    }
+
     void Update()
     {
         if (!movementEnabled)

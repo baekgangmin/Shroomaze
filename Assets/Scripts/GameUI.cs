@@ -13,6 +13,8 @@ public class GameUI : MonoBehaviour
     public Text statusText;
     public GameObject gameOverPanel;
     public Button restartButton;
+    public GameObject gameClearPanel;
+    public Button gameClearRestartButton;
 
     string pendingMessage;
     float messageTimer;
@@ -20,12 +22,15 @@ public class GameUI : MonoBehaviour
     void Start()
     {
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (gameClearPanel != null) gameClearPanel.SetActive(false);
         if (cycleManager != null)
         {
             cycleManager.OnGameOver += HandleGameOver;
+            cycleManager.OnGameComplete += HandleGameComplete;
             cycleManager.OnStageMessage += HandleStageMessage;
         }
         if (restartButton != null) restartButton.onClick.AddListener(HandleRestartClicked);
+        if (gameClearRestartButton != null) gameClearRestartButton.onClick.AddListener(HandleRestartClicked);
     }
 
     void OnDestroy()
@@ -33,6 +38,7 @@ public class GameUI : MonoBehaviour
         if (cycleManager != null)
         {
             cycleManager.OnGameOver -= HandleGameOver;
+            cycleManager.OnGameComplete -= HandleGameComplete;
             cycleManager.OnStageMessage -= HandleStageMessage;
         }
     }
@@ -102,6 +108,11 @@ public class GameUI : MonoBehaviour
     void HandleGameOver()
     {
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
+    }
+
+    void HandleGameComplete()
+    {
+        if (gameClearPanel != null) gameClearPanel.SetActive(true);
     }
 
     void HandleStageMessage(string message)

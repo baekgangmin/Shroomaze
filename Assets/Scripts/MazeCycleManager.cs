@@ -36,6 +36,7 @@ public class MazeCycleManager : MonoBehaviour
     public string CurrentColorName => colorNames[CurrentColorIndex % colorNames.Length];
 
     public System.Action OnGameOver;
+    public System.Action OnGameComplete;
     public System.Action<int> OnColorChanged;
     public System.Action<string> OnStageMessage;
 
@@ -184,6 +185,7 @@ public class MazeCycleManager : MonoBehaviour
             OnStageMessage?.Invoke("모든 버섯을 종류별로 다 모았습니다! 게임 클리어!");
             State = CycleState.GameComplete;
             if (teleportPlayerToHub && player != null) player.movementEnabled = true;
+            OnGameComplete?.Invoke();
             yield break;
         }
 
