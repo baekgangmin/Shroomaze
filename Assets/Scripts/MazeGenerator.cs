@@ -18,6 +18,7 @@ public class MazeGenerator : MonoBehaviour
 
     [Header("Mushrooms")]
     public int mushroomCount = 10;
+    public int currentColorIndex;
 
     [Header("Entrance")]
     public int entranceX = 0;
@@ -262,12 +263,14 @@ public class MazeGenerator : MonoBehaviour
             if (col == null) col = go.AddComponent<SphereCollider>();
             col.isTrigger = true;
 
-            if (go.GetComponent<Mushroom>() == null) go.AddComponent<Mushroom>();
+            var mushroom = go.GetComponent<Mushroom>();
+            if (mushroom == null) mushroom = go.AddComponent<Mushroom>();
+            mushroom.colorIndex = currentColorIndex;
         }
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.SetMazeMushroomTotal(count);
+            GameManager.Instance.SetMazeMushroomTotal(count, currentColorIndex);
         }
     }
 }

@@ -3,6 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class Mushroom : MonoBehaviour
 {
+    public int colorIndex;
+
     void Reset()
     {
         var col = GetComponent<Collider>();
@@ -15,7 +17,7 @@ public class Mushroom : MonoBehaviour
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.CollectMushroom();
+            GameManager.Instance.CollectMushroom(colorIndex);
         }
         Destroy(gameObject);
     }

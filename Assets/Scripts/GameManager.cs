@@ -4,22 +4,35 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public int collectedCount = 0;
-    public int totalMushroomsInMaze = 0;
+    public int[] collectedByColor = new int[3];
+    public int currentMazeRemaining = 0;
+    public int currentMazeColorIndex = 0;
+    public int targetPerColor = 15;
+
+    // Fired the instant currentMazeRemaining hits zero. Since each maze only ever spawns as many
+    // mushrooms as still needed to reach that color's target, clearing it always means the target
+    // was just reached.
+    public System.Action<int> OnMazeCleared;
 
     void Awake()
     {
         Instance = this;
     }
 
-    public void SetMazeMushroomTotal(int total)
+    public void SetMazeMushroomTotal(int total, int colorIndex)
     {
-        totalMushroomsInMaze = total;
+        currentMazeRemaining = total;
+        currentMazeColorIndex = colorIndex;
     }
 
-    public void CollectMushroom()
+    public void CollectMushroom(int colorIndex)
     {
-        collectedCount++;
-        totalMushroomsInMaze = Mathf.Max(0, totalMushroomsInMaze - 1);
+        if (colorIndex >= 0 && colorIndex < collectedByColor.Length) collectedByColor[colorIndex]++;
+
+        if (currentMazeRemaining > 0)
+        {
+            currentMazeRemaining--;
+            if (currentMazeRemaining == 0) OnMazeCleared?.Invoke(colorIndex);
+        }
     }
 }

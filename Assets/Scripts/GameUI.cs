@@ -14,16 +14,27 @@ public class GameUI : MonoBehaviour
     public GameObject gameOverPanel;
     public Button restartButton;
 
+    string pendingMessage;
+    float messageTimer;
+
     void Start()
     {
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        if (cycleManager != null) cycleManager.OnGameOver += HandleGameOver;
+        if (cycleManager != null)
+        {
+            cycleManager.OnGameOver += HandleGameOver;
+            cycleManager.OnStageMessage += HandleStageMessage;
+        }
         if (restartButton != null) restartButton.onClick.AddListener(HandleRestartClicked);
     }
 
     void OnDestroy()
     {
-        if (cycleManager != null) cycleManager.OnGameOver -= HandleGameOver;
+        if (cycleManager != null)
+        {
+            cycleManager.OnGameOver -= HandleGameOver;
+            cycleManager.OnStageMessage -= HandleStageMessage;
+        }
     }
 
     void Update()
@@ -41,14 +52,36 @@ public class GameUI : MonoBehaviour
             }
         }
 
-        if (collectedText != null && gameManager != null)
-            collectedText.text = "수집한 버섯: " + gameManager.collectedCount;
+        if (collectedText != null && gameManager != null && cycleManager != null)
+        {
+            var sb = new System.Text.StringBuilder("수집한 버섯\n");
+            for (int i = 0; i < gameManager.collectedByColor.Length; i++)
+            {
+                if (i > 0) sb.Append("  ");
+                sb.Append(cycleManager.colorNames[i % cycleManager.colorNames.Length]).Append(": ")
+                  .Append(gameManager.collectedByColor[i]).Append("/").Append(gameManager.targetPerColor);
+            }
+            collectedText.text = sb.ToString();
+        }
 
-        if (remainingText != null && gameManager != null)
-            remainingText.text = "미로 안 남은 버섯: " + gameManager.totalMushroomsInMaze;
+        if (remainingText != null && gameManager != null && cycleManager != null)
+        {
+            string colorName = cycleManager.colorNames[gameManager.currentMazeColorIndex % cycleManager.colorNames.Length];
+            remainingText.text = "미로 안 남은 버섯 (" + colorName + "): " + gameManager.currentMazeRemaining;
+        }
 
         if (statusText != null && cycleManager != null)
-            statusText.text = DescribeState(cycleManager.State) + " (" + cycleManager.CurrentColorName + ")";
+        {
+            if (messageTimer > 0f)
+            {
+                messageTimer -= Time.deltaTime;
+                statusText.text = pendingMessage;
+            }
+            else
+            {
+                statusText.text = DescribeState(cycleManager.State) + " (" + cycleManager.CurrentColorName + ")";
+            }
+        }
     }
 
     string DescribeState(MazeCycleManager.CycleState state)
@@ -61,6 +94,7 @@ public class GameUI : MonoBehaviour
             case MazeCycleManager.CycleState.Maintenance: return "정비 시간";
             case MazeCycleManager.CycleState.Transitioning: return "미로 교체 중...";
             case MazeCycleManager.CycleState.GameOver: return "게임 오버";
+            case MazeCycleManager.CycleState.GameComplete: return "게임 클리어!";
             default: return "";
         }
     }
@@ -68,6 +102,12 @@ public class GameUI : MonoBehaviour
     void HandleGameOver()
     {
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
+    }
+
+    void HandleStageMessage(string message)
+    {
+        pendingMessage = message;
+        messageTimer = 3.5f;
     }
 
     void HandleRestartClicked()
