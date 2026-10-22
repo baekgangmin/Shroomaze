@@ -74,4 +74,4 @@ Assets/Scripts/
 
 ## 개발 과정
 
-이 프로젝트는 처음부터 끝까지 Claude(AI 코딩 에이전트)와 Unity MCP(에디터 직접 제어)로 개발했습니다. 자세한 개발 로그와 AI 활용 기록은 [평가 포트폴리오 페이지](https://app.notion.com/p/401aa5b8e68f8140962ae58219c9fb4f)에 정리되어 있습니다.
+자세한 개발 로그와 AI 활용 기록은 [평가 포트폴리오 페이지](https://app.notion.com/p/401aa5b8e68f8140962ae58219c9fb4f)에 정리되어 있습니다.
